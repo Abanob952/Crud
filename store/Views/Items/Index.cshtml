@@ -1,0 +1,243 @@
+﻿@using store.Models.ViewModels
+@model ItemsViewModel
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div>
+    <div class="head">
+        <h1>Manage Store Items</h1>
+        <button id="addBtn" class="btn btn-primary">Add New Item</button>
+    </div>
+    <div class="mb-1">
+        <small >*Click on Values to edit</small>
+    </div>
+    <table id="table">
+        <thead>
+            <tr>
+                <th scope="col">Item Name</th>
+                <th scope="col">Item Price</th>
+                <th scope="col">In Stock</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Items.Count(); i++)
+            {
+                <tr>
+                    <td class="NameHost">
+                        <label>@Model.Items[i].Name</label>
+                        <input value="@Model.Items[i].Name" data-name-id="@Model.Items[i].Id" class="inp" type="text" name="Name" />
+                    </td>
+                    <td class="PriceHost">
+                        <label>@Model.Items[i].Price</label>
+                        <input value="@Model.Items[i].Price" data-price-id="@Model.Items[i].Id" class="inp" type="number" name="Price" />
+                    </td>
+                    <td>@Model.Items[i].Stock</td>
+                    <td>
+                        <button  data-id="@Model.Items[i].Id" type="button" class="Edit btn btn-success">Edit</button>
+                        <button  data-id="@Model.Items[i].Id" type="button" class="Delete btn btn-danger">Delete</button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>
+<div id="modal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this Item ?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="confirm" class="btn btn-primary">Delete</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="addModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Item</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form1">
+                    <div class="form-group">
+                        <label asp-for="@Model.Name" class="form-label">Item Name</label>
+                        <input id="addName" asp-for="@Model.Name" class="form-control" />
+                        <span asp-validation-for="@Model.Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="@Model.Price" class="form-label">Item Price</label>
+                        <input id="addPrice" asp-for="@Model.Price" class="form-control" />
+                        <span asp-validation-for="@Model.Price" class="text-danger"></span>
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button form="form1" type="submit" id="confirm" class="btn btn-primary">Add</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/lib/datatables.net/jquery.dataTables.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/additional-methods.min.js"></script>
+    <script src="~/lib/toastr.js/toastr.min.js"></script>
+    <script>
+        $(".inp").hide()
+        $(document).ready(function () {
+            var arr = [];
+            //$.validator.addMethod("CheckFull", function () {
+
+            //});
+            var table = $("#table").DataTable();
+
+            $("body").click(function (e) {
+                if (e.target.tagName != "INPUT" && e.target.tagName != "LABEL" && e.target.tagName != "TD") {
+                    console.log(e.target.tagName);
+                    $(".inp").hide();
+                    $("label").show();
+                }
+
+            });
+            $("#table").on("click",".NameHost",function () {
+                let input = $(this).children("input");
+                let label = $(this).children("label");
+                input.show();
+                input.val(label.text());
+                label.hide();
+            });
+            $("#table").on("click",".PriceHost",function () {
+                let input = $(this).children("input");
+                let label = $(this).children("label");
+                input.show();
+                input.val(label.text());
+                label.hide();
+            });
+            //on Edit click
+            $("#table").on("click",".Edit",function () {
+                let id = $(this).attr("data-id");
+                console.log(id);
+                let name = $("input[data-name-id='" + id + "']");
+                let price = $("input[data-price-id='" + id + "']");
+                let obj = {
+                    Name: name.val(),
+                    Price: price.val()
+                }
+                console.log(obj);
+                $.ajax({
+                    method: "PUT",
+
+                    data:obj,
+                    url:"@ViewBag.scheme://@ViewBag.url/Items/Edit/"+id,
+                    success: function () {
+                        //sets value of label
+                        let labeln = name.siblings("label")[0];
+                        console.log(labeln.innerText);
+                        labeln.innerText = obj.Name;
+                        let labelp = price.siblings("label")[0];
+                        labelp.innerText=obj.Price;
+                        toastr.success("Item was Edited Successfully");
+                    },
+                    error: function () {
+                        toastr.error("An unexpected error has occurred");
+                    }
+                });
+            });
+
+            $("#table").on("click",".Delete",function () {
+                let btn = $(this);
+                arr.push(btn);
+                let id = btn.attr("data-id");
+                console.log(id+" id of delete");
+                $('#modal').modal('toggle');
+                $("#confirm").attr("data-delete", id);
+
+
+            });
+            $("#confirm").on("click", function () {
+                let id = $(this).attr("data-delete");
+                let btn = arr.pop();
+                    $.ajax({
+                        url: "@ViewBag.scheme://@ViewBag.url/Items/Delete/" + id,
+                        method: "DELETE",
+                        success: function () {
+                            $('#modal').modal('hide');
+                            let tr = btn.parents("tr")[0];
+                            table.row(tr).remove().draw();
+                            toastr.success("Item was deleted successfully");
+                        },
+                        error: function () {
+                            toastr.error("An unexpected error has occured");
+                        }
+
+                    })
+                });
+            $("#addBtn").click(function () {
+
+                $('#addModal').modal('toggle');
+            });
+
+            $("#form1").submit(function (e) {
+                e.preventDefault();
+                if ($("#form1").valid()) {
+                    let obj = {
+                        Name: $("#addName").val(),
+                        Price: $("#addPrice").val(),
+                    }
+                    $.ajax({
+                        url: "@ViewBag.scheme://@ViewBag.url/Items/Add",
+                        data: obj,
+                        method: "POST",
+                        success: function (response) {
+                            console.log(response);
+                            toastr.success("Item was added successfully");
+
+                            let row = $('<tr>')
+                                .append(`<td class="NameHost">
+                                                <label>${obj.Name}</label>
+                                                <input value="${obj.Name}"  data-name-id="${response.id}" class="inp" type="text" name="Name" />
+                                            </td>`)
+                                .append(`<td class="PriceHost">
+                                                <label>${obj.Price}</label>
+                                                <input value="${obj.Price}" data-price-id="${response.id}" class="inp" type="text" name="Price" />
+                                            </td>`)
+                                .append('<td>0</td>')
+                                .append(`<td>
+                                                <button  data-id="${response.id}" type="button" class="Edit btn btn-success">Edit</button>
+                                                <button  data-id="${response.id}" type="button" class="Delete btn btn-danger">Delete</button>
+                                            </td>`);
+
+                            table.row.add(row).draw();
+                            $("#addModal").modal("hide");
+                            $(".inp").hide();
+
+                        },
+                        error: function () {
+                            toastr.error("An unexpected error has occurred");
+                        }
+
+                    })
+                }
+            })
+        })
+    </script>
+}

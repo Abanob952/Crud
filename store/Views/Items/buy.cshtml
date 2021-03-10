@@ -1,0 +1,67 @@
+﻿@using store.Models.ViewModels
+@model StockViewModels
+@{
+    ViewData["Title"] = "buy";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Buy New Items</h1>
+<div asp-validation-summary="All" class="text-danger"></div>
+<div>
+    <table id="table" class="table">
+        <thead>
+            <tr>
+                <th scope="col">Item Name</th>
+                <th scope="col">Item Price</th>
+                <th scope="col">In Stock</th>
+                <th scope="col">Buy</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+                <td class="NameHost">
+                    <select id="select" class="form-control">
+                        <option selected disabled>Choose an item</option>
+                        @foreach (ItemViewModel ivm in Model.Ivm)
+                        {
+                            <option value="@ivm.Id">@ivm.Name</option>
+                        }
+                    </select>
+                </td>
+                <td class="PriceHost">
+                    <label id="price">0</label>
+                </td>
+                <td id="stock">0</td>
+                <td>
+                    <form asp-action="AddStock" asp-controller="Items" method="post">
+                        <input asp-for="@Model.Stock" type="number" />
+                        @*<span asp-validation-for="@Model.Stock" class="text-danger"></span>*@
+                        <input name="Id" id="numb" type="hidden" />
+                        <button type="submit" class="btn btn-primary">Buy</button>
+                    </form>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+</div>
+@section Scripts{
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#select").on("change", function () {
+                let arr = @Html.Raw(Json.Serialize(Model.Ivm));
+                let id = $(this).val();
+                let obj = arr.filter(c => c.id == id);
+                console.log(obj);
+                $("#stock").text(obj[0].stock);
+                $("#price").text(obj[0].price);
+                $("#numb").val($(this).val());
+            });
+
+        });
+    </script>
+
+}
